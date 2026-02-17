@@ -1,0 +1,23 @@
+---
+# Global attributes of NetCDF file
+attributes:
+  dataset_id: MISR
+  project_id: CMOR6
+  tier: 2
+  version: 'V0032'
+  modeling_realm: sat
+  source: 'ftp://l5ftl01.larc.nasa.gov/MISR/MIL3MAEN.004/'
+  reference: 'misr'
+  comment: ''
+  files: 'MISR_AM1_CGAS_*_F15_0032.nc'
+# Variables to CMORize
+variables:
+  od550aer:
+    raw_name: Aerosol_Optical_Depth
+    mip: AERmon
+  abs550aer:
+    raw_name: Absorbing_Optical_Depth
+    mip: AERmon
+  # ae:
+  #  raw_name: Angstrom_Exponent_550_860
+  #  mip: AERmon
