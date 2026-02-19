@@ -1003,6 +1003,24 @@ datasets:
       yearly granularity. Note that some (most) variables are on the goldsmr4 server,
       whereas others are on the goldsmr5 server.
 
+  MISR:
+    tier: 3
+    source: https://asdc.larc.nasa.gov/project/MISR/MIL3MAEN_004
+    last_access: 2026-02-18
+    info: |
+      In Products: select "MISR", "Collection 6.1" and "L3 Atmosphere Product",
+        click on MISR_AM1_AS_L3_V4.1.
+      In Time: select from 2000-01-01 to today.
+      In Location: skip, the global domain will be applied.
+      In Files: select all.
+      Submit the order.
+      A registration is required to download the data.
+
+       Caveats
+        clwvi and clivi data are in-cloud values whereas CMIP5 models provide
+        grid-box averages --> multiply MISR clwvi and clivi values with cloud
+        fraction as a first guess
+
   MLS-AURA:
     tier: 3
     source: https://disc.gsfc.nasa.gov/datasets/ML2RHI_004/summary https://disc.gsfc.nasa.gov/datasets/ML2T_004/summary

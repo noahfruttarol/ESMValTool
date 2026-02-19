@@ -1,7 +1,7 @@
 """ESMValTool CMORizer for MISR data.
 
 Tier
-    Tier 2
+    Tier 3
 
 Source
     ftp://l5ftl01.larc.nasa.gov/MISR/MIL3MAEN.004/
@@ -39,11 +39,15 @@ def _extract_variable(short_name, var, cfg, in_dir, out_dir):
     cmor_table = CMOR_TABLES[attrs["project_id"]]
     cmor_info = cmor_table.get_variable(var["mip"], short_name)
 
-    logger.info("CMORizing variable '%s' from file(s) '%s'", short_name, files)
-
     """Extract variable."""
     # load data
-    for filepath in Path(os.path.join(in_dir, ver)).glob(files):
+    logger.info(
+        "Loading data from file(s) '%s' in directory '%s' with version '%s'",
+        files,
+        in_dir,
+        ver,
+    )
+    for filepath in Path(os.path.join(in_dir)).glob(files):
         xrds = xr.open_dataset(filepath, group="Aerosol_Parameter_Average")
         xrvar = xrds.sel(Band=band550["name"], Optical_Depth_Range="all")[
             raw_var
@@ -133,6 +137,7 @@ def _extract_variable(short_name, var, cfg, in_dir, out_dir):
         utils.set_global_atts(cube, attrs)
 
         # Save variable
+        logger.info(f"Saving Cube: {cube}, in directory: {out_dir}")
         utils.save_variable(
             cube, short_name, out_dir, attrs, unlimited_dimensions=["time"]
         )
