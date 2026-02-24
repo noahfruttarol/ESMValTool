@@ -5,10 +5,6 @@ Tier
 
 Source
     ftp://l5ftl01.larc.nasa.gov/MISR/MIL3MAEN.004/
-
-Modification history
-
-
 """
 
 import copy
@@ -41,7 +37,7 @@ def _extract_variable(short_name, var, cfg, in_dir, out_dir):
 
     """Extract variable."""
     # load data
-    logger.info(
+    logger.debug(
         "Loading data from file(s) '%s' in directory '%s' with version '%s'",
         files,
         in_dir,
@@ -116,7 +112,7 @@ def _extract_variable(short_name, var, cfg, in_dir, out_dir):
         # so the original code tried to roll the cube on the time axis
         # I could hard-code the lon axis (like they did), but instead I try to autodetect it.
         cube_coord = cube.coord("longitude")
-        logger.info("Fixing longitude...")
+        logger.debug("Fixing longitude...")
         if cube_coord.ndim == 1:
             if cube_coord.points[0] < 0.0 and cube_coord.points[-1] < 181.0:
                 cube_coord.points = cube_coord.points + 180.0
@@ -126,6 +122,24 @@ def _extract_variable(short_name, var, cfg, in_dir, out_dir):
                 axis = cube.coords().index(cube_coord)
                 shift = nlon // 2
                 cube.data = da.roll(cube.core_data(), shift, axis=axis)
+
+        if np.diff(cube.coord("latitude").points)[0] < 0:
+            # convert [90,-90] to [-90,90]
+            cube.coord("latitude").points = cube.coord("latitude").points[::-1]
+            # flip the data
+            cube.data = cube.data[:, ::-1, :]  # latitude is axis=1
+
+        lat_bounds = []
+        for lat in cube.coord("latitude").points:
+            lat_bounds.append([lat - 0.25, lat + 0.25])
+        lat_bounds = np.array(lat_bounds)
+        cube.coord("latitude").bounds = lat_bounds.reshape(-1, 2)
+
+        lon_bounds = []
+        for lon in cube.coord("longitude").points:
+            lon_bounds.append([lon - 0.25, lon + 0.25])
+        lon_bounds = np.array(lon_bounds)
+        cube.coord("longitude").bounds = lon_bounds.reshape(-1, 2)
 
         utils.fix_coords(cube)
 
@@ -137,7 +151,7 @@ def _extract_variable(short_name, var, cfg, in_dir, out_dir):
         utils.set_global_atts(cube, attrs)
 
         # Save variable
-        logger.info(f"Saving Cube: {cube}, in directory: {out_dir}")
+        logger.debug(f"Saving Cube: {cube}, in directory: {out_dir}")
         utils.save_variable(
             cube, short_name, out_dir, attrs, unlimited_dimensions=["time"]
         )
@@ -148,4 +162,5 @@ def cmorization(in_dir, out_dir, cfg, cfg_user, start_date, end_date):
     cfg.pop("cmor_table")
 
     for short_name, var in cfg["variables"].items():
+        logger.info(f"CMORizing variable '{short_name}'")
         _extract_variable(short_name, var, cfg, in_dir, out_dir)
