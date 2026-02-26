@@ -1,64 +1,323 @@
 ---
+# Requirements: GSW-Python, https://pypi.org/project/gsw/
+#               For calcualtion of Thermodynamic Equation of Seawater 2010 (TEOS-10) is based primarily on numpy ufunc wrappers of the GSW-C implementation
+# Edited: 2026-01-19 Kristi Webb
+
 # Common global attributes for Cmorizer output
 attributes:
 
+  project_id: CMIP6 # cmorization standard
   dataset_id: WOA
-  tier: 2
+  modeling_realm: clim
   type: clim
+  tier: 2
 
   # WOA13
-  # project_id: OBS
   # short_name: woa13
-  # version: '2013v2'
+  # version: 'v2013v2'
   # source: 'https://www.ncei.noaa.gov/data/oceans/woa/WOA13/DATAv2/'
   # reference: 'woa2013v2'
 
   # WOA18
-  project_id: OBS6
-  short_name: woa18
-  version: '2018'
-  source: 'https://www.ncei.noaa.gov/data/oceans/woa/WOA18/DATA/'
-  reference: 'woa2018'
+  # short_name: woa18
+  # version: 'v2018'
+  # source: 'https://www.ncei.noaa.gov/data/oceans/woa/WOA18/DATA/'
+  # reference: 'woa2018'
+
+  # WOA23
+  short_name: woa23
+  version: 'v2023'
+  source: 'https://www.ncei.noaa.gov/data/oceans/woa/woa23/DATA/'
+  reference: 'woa2023'
 
   comment: ''
 
 # Variables to cmorize (here use only filename prefix)
 # Temperature and salinity from 1981-2010 climatology (81B0)
+
+# variable labels should include associated versions
+# eg thetao_v2023
+# this permits different setups for different versions
+# (eg if units differ between versions, files, etc)
+
+# mip : CMOR table
+# raw_var: raw variable name
+# name: raw variable long name
+# file: file variant
+# sft_var: surface variable
+# supplimentary_vars: supplementary variable informaiton (list)
+
 variables:
-  thetao:
-    mip: Omon
-    raw_var: t_an
+
+  ######## thetao #####################
+  # one decade for mon, decav81B0
+  thetao_mon_v2023_v2018_v2013v2_decav81B0:
+    raw_var: t_an # in-situ temperature
     name: temperature
-    file: decav81B0_t
-    srf_var: tos
-  so:
+    short_name: thetao
     mip: Omon
-    raw_var: s_an
-    name: salinity
-    file: decav81B0_s
-    srf_var: sos
-  o2:
+    frequency: mon
+    file: decav81B0
+    supplimentary_vars:
+    - name: salinity
+      raw_var: s_an
+      file: decav81B0
+
+  # three decades for yr: decav71A0, decav81B0, decav91C0
+  thetao_yr_v2023_v2018_v2013v2_decav81B0:
+    raw_var: t_an # in-situ temperature
+    name: temperature
+    short_name: thetao
     mip: Oyr
+    frequency: yr
+    file: decav81B0
+    supplimentary_vars:
+    - name: salinity
+      raw_var: s_an
+      file: decav81B0
+
+  thetao_yr_v2023_v2018_v2013v2_decav71A0:
+    raw_var: t_an # in-situ temperature
+    name: temperature
+    short_name: thetao
+    mip: Oyr
+    frequency: yr
+    file: decav71A0
+    supplimentary_vars:
+    - name: salinity
+      raw_var: s_an
+      file: decav71A0
+
+  thetao_yr_v2023_v2018_v2013v2_decav91C0:
+    raw_var: t_an # in-situ temperature
+    name: temperature
+    short_name: thetao
+    mip: Oyr
+    frequency: yr
+    file: decav91C0
+    supplimentary_vars:
+    - name: salinity
+      raw_var: s_an
+      file: decav91C0
+
+  # annual climatology cmorized to Omon standard
+  thetao_yr_Omon_v2023_v2018_v2013v2_decav81B0:
+    raw_var: t_an # in-situ temperature
+    name: temperature
+    short_name: thetao
+    mip: Omon
+    frequency: yr
+    file: decav81B0
+    supplimentary_vars:
+    - name: salinity
+      raw_var: s_an
+      file: decav81B0
+
+  thetao_yr_Omon_v2023_v2018_v2013v2_decav71A0:
+    raw_var: t_an # in-situ temperature
+    name: temperature
+    short_name: thetao
+    mip: Omon
+    frequency: yr
+    file: decav71A0
+    supplimentary_vars:
+    - name: salinity
+      raw_var: s_an
+      file: decav71A0
+
+  thetao_yr_Omon_v2023_v2018_v2013v2_decav91C0:
+    raw_var: t_an # in-situ temperature
+    name: temperature
+    short_name: thetao
+    mip: Omon
+    frequency: yr
+    file: decav91C0
+    supplimentary_vars:
+    - name: salinity
+      raw_var: s_an
+      file: decav91C0
+
+  # ########### bigthetao ################
+  # one decade for mon, decav81B0
+  bigthetao_mon_v2023_v2018_v2013v2_decav81B0:
+    raw_var: t_an # in-situ temperature
+    name: temperature
+    short_name: bigthetao
+    mip: Omon
+    frequency: mon
+    file: decav81B0
+    srf_var: tos # tos = bigthetao(depth=0)
+    supplimentary_vars:
+    - name: salinity
+      raw_var: s_an
+      file: decav81B0
+
+  # three decades for yr: decav71A0, decav81B0, decav91C0
+  bigthetao_yr_v2023_v2018_v2013v2_decav81B0:
+    raw_var: t_an # in-situ temperature
+    name: temperature
+    short_name: bigthetao
+    mip: Oyr
+    frequency: yr
+    file: decav81B0
+    srf_var: tos # tos = bigthetao(depth=0)
+    supplimentary_vars:
+    - name: salinity
+      raw_var: s_an
+      file: decav81B0
+
+  bigthetao_yr_v2023_v2018_v2013v2_decav71A0:
+    raw_var: t_an # in-situ temperature
+    name: temperature
+    short_name: bigthetao
+    mip: Oyr
+    frequency: yr
+    file: decav71A0
+    srf_var: tos # tos = bigthetao(depth=0)
+    supplimentary_vars:
+    - name: salinity
+      raw_var: s_an
+      file: decav71A0
+
+  bigthetao_yr_v2023_v2018_v2013v2_decav91C0:
+    raw_var: t_an # in-situ temperature
+    name: temperature
+    short_name: bigthetao
+    mip: Oyr
+    frequency: yr
+    file: decav91C0
+    srf_var: tos # tos = bigthetao(depth=0)
+    supplimentary_vars:
+    - name: salinity
+      raw_var: s_an
+      file: decav91C0
+
+  # annual climatology cmorized to Omon standard
+  bigthetao_yr_Omon_v2023_v2018_v2013v2_decav81B0:
+    raw_var: t_an # in-situ temperature
+    name: temperature
+    short_name: bigthetao
+    mip: Omon
+    frequency: yr
+    file: decav81B0
+    srf_var: tos # tos = bigthetao(depth=0)
+    supplimentary_vars:
+    - name: salinity
+      raw_var: s_an
+      file: decav81B0
+
+  bigthetao_yr_Omon_v2023_v2018_v2013v2_decav71A0:
+    raw_var: t_an # in-situ temperature
+    name: temperature
+    short_name: bigthetao
+    mip: Omon
+    frequency: yr
+    file: decav71A0
+    srf_var: tos # tos = bigthetao(depth=0)
+    supplimentary_vars:
+    - name: salinity
+      raw_var: s_an
+      file: decav71A0
+
+  bigthetao_yr_Omon_v2023_v2018_v2013v2_decav91C0:
+    raw_var: t_an # in-situ temperature
+    name: temperature
+    short_name: bigthetao
+    mip: Omon
+    frequency: yr
+    file: decav91C0
+    srf_var: tos # tos = bigthetao(depth=0)
+    supplimentary_vars:
+    - name: salinity
+      raw_var: s_an
+      file: decav91C0
+
+  ##### so #########################
+
+  so_mon_v2018_v2023: &so_mon_v2018_v2023_decav81B0
+    short_name: so
+    mip: Omon
+    frequency: mon
+    raw_var: s_an # practical salinity. dims are (depth, lat, lon)
+    name: salinity
+    file: decav81B0
+    srf_var: sos # sos = so(depth=0)
+    units: 1 # force units to be 1 (despite being labelled 1e-3 in 2018)
+    supplimentary_vars:
+    - raw_var: t_an # in-situ temperature
+      name: temperature
+      file: decav81B0
+
+  so_yr_v2018_v2023_decav81B0: &so_yr_v2018_v2023_decav81B0
+    <<: *so_mon_v2018_v2023_decav81B0
+    mip: Oyr
+    frequency: yr
+
+  so_yr_v2018_v2023_decav71A0: &so_yr_v2018_v2023_decav71A0
+    <<: *so_yr_v2018_v2023_decav81B0
+    file: decav71A0
+    supplimentary_vars:
+    - raw_var: t_an # in-situ temperature
+      name: temperature
+      file: decav71A0
+
+  so_yr_v2018_v2023_decav91C0: &so_yr_v2018_v2023_decav91C0
+    <<: *so_yr_v2018_v2023_decav81B0
+    file: decav91C0
+    supplimentary_vars:
+    - raw_var: t_an # in-situ temperature
+      name: temperature
+      file: decav91C0
+
+  # annual climatology cmorized to Omon standard
+  so_yr_Omon_v2023_v2018_decav81B0:
+    <<: *so_yr_v2018_v2023_decav81B0
+    mip: Omon
+  so_yr_Omon_v2023_v2018_decav71A0:
+    <<: *so_yr_v2018_v2023_decav71A0
+    mip: Omon
+  so_yr_Omon_v2023_v2018_decav91C0:
+    <<: *so_yr_v2018_v2023_decav91C0
+    mip: Omon
+
+  o2_v2018_v2023:
+    short_name: o2
+    mip: Oyr
+    frequency: yr
     raw_var: o_an
     name: oxygen
     file: all_o
-  no3:
+    units: "micromole / kilogram" # cf_units cannot interpret native "micromole_per_kilogram" unit
+
+  no3_v2018_v2023:
+    short_name: no3
     mip: Oyr
+    frequency: yr
     raw_var: n_an
     name: nitrate
     file: all_n
-  po4:
+    units: "micromole / kilogram" # cf_units cannot interpret native "micromole_per_kilogram" unit
+
+  po4_v2018_v2023:
+    short_name: po4
     mip: Oyr
+    frequency: yr
     raw_var: p_an
     name: phosphate
     file: all_p
-  si:
+    units: "micromole / kilogram" # cf_units cannot interpret native "micromole_per_kilogram" unit
+
+  si_v2018_v2023:
+    short_name: si
     mip: Oyr
+    frequency: yr
     raw_var: i_an
     name: silicate
     file: all_i
+    units: "micromole / kilogram" # cf_units cannot interpret native "micromole_per_kilogram" unit
 
 # Custom dictionary for this cmorizer
 custom:
-  reference_year: 2000
   resolution: '1.00'
+  rho_bsq: 1035.0  # Boussinesq reference density, kg.m-3
+  grav: 9.81  # gravitational acceleration, m.s-2
