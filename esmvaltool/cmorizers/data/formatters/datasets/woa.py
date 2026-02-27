@@ -27,14 +27,28 @@ Download and processing instructions
 
 
 Modification history
-   20250911-webb_kristi: fix calculation of thetao, so, add bigthetao
-   20250603-webb_kristi: fix WOA23 cmorization
+   20250911-webb_kristi: Change calculation of thetao, so, add bigthetao*. 
+                         Reference year changed to midpoint of decade, instead of 2000.
    20240911-webb_kristi: handle WOA18/WOA13/WOA23, raw data download, use OBS6
    20210311-lovato_tomas: handle WOA18/WOA13, raw data download, use OBS6
    20200911-bock_lisa: extend to WOA18
    20190328-lovato_tomas: cmorizer revision
    20190131-predoi_valeriu: adapted to v2.
    20190131-demora_lee: written.
+
+*Modifications to the calcualtion of thetao, so, bigthetao:
+Converting depth to pressure and then using the GSW functions, :
+
+    Pa2dbar = 1e-4  # conversion factor, dbar.Pa-1
+    P = grav * rho_bsq * Pa2dbar * Z  # [dbar]
+    Sstar = gsw.Sstar_from_SP(SP, P, lon, lat).rename("Sstar_an")
+    pt = gsw.pt0_from_t(Sstar, iT, P).rename("pt_an")
+    CT = gsw.CT_from_pt(Sstar, pt).rename("CT_an")
+
+Reference: https://www.teos-10.org/publications.htm
+Requirements: GSW-Python, https://pypi.org/project/gsw/
+              For calcualtion of Thermodynamic Equation of Seawater 2010 (TEOS-10) is based primarily on numpy ufunc wrappers of the GSW-C implementation
+Author: Geoff Stanley, ECCC CCCma
 """
 
 import glob
@@ -62,17 +76,17 @@ logger = logging.getLogger(__name__)
 def _fix_data(cube, cmor_var_info=None, custom_units=None):
     """Specific data fixes for different variables."""
     logger.info("Fixing data ...")
-    logger.info(
+    logger.debug(
         f"Current units: {cube.units}, cmor units: {cmor_var_info.units}. Specified units: {custom_units}"
     )
 
     if custom_units is not None:
-        logger.info(f">>> Manually setting units to {custom_units}")
+        logger.debug(f"Manually setting units to {custom_units}")
         cube.units = custom_units
 
     if (cmor_var_info is not None) and (cube.units != cmor_var_info.units):
-        logger.info(
-            f'>>> converting from units "{cube.units}" to "{cmor_var_info.units}"'
+        logger.debug(
+            f'Converting from units "{cube.units}" to "{cmor_var_info.units}"'
         )
         try:
             cube.convert_units(cmor_var_info.units)
@@ -216,7 +230,7 @@ def depth_to_pressure(depth, grav=9.81, rho_bsq=1035.0):
     return rho_bsq * grav * depth_m * Pa2dbar  # dbar
 
 
-def collect_files(in_dir, var_info, cfg):
+def collect_files(file, in_dir, var_info, cfg):
     """Compose input file list and download if missing."""
 
     attrs = cfg["attributes"]
@@ -227,7 +241,7 @@ def collect_files(in_dir, var_info, cfg):
     in_dir = os.path.join(
         in_dir, attrs["version"], var_info["frequency"], var_info["name"]
     )
-    fname = f"{attrs['short_name'].lower()}_{var_info['file']}*.nc"
+    fname = f"{attrs['short_name'].lower()}_{file}*.nc"
 
     in_file = os.path.join(in_dir, fname)
 
@@ -286,7 +300,7 @@ def infer_reference_year(cube, files, var):
         duration_year = end_year - start_year
 
     ref_year = start_year + int(duration_year / 2)
-    logger.info(f">>> setting reference year to {ref_year}")
+    logger.debug(f"Setting reference year to {ref_year}")
 
     return ref_year
 
@@ -395,7 +409,9 @@ def cmorization(in_dir, out_dir, cfg, cfg_user, start_date, end_date):
 
     # run the cmorization
     for var, var_info in cfg["variables"].items():
-        if glob_attrs.get("version") not in var:
+
+        # ensure that data version complient with variable group
+        if var_info.get('versions') and (glob_attrs.get("version") not in var_info.get('versions')): 
             continue
 
         logger.info(
@@ -403,32 +419,37 @@ def cmorization(in_dir, out_dir, cfg, cfg_user, start_date, end_date):
         )
 
         var_info.update(cfg["custom"])
-        logger.info("\n" + pformat(var_info))
+        logger.debug("\n" + pformat(var_info))
 
-        try:
-            # organize input files
-            in_files_d = {
-                var_info["name"]: {
-                    "files": collect_files(in_dir, var_info, cfg),
-                    "short_name": var_info["short_name"],
-                    "raw_var": var_info["raw_var"],
-                    "units": var_info.get("units"),
-                },
-            }
+        for file in var_info['files']:
 
-            for supp_var_info in var_info.get("supplimentary_vars", []):
-                supp_var_info["frequency"] = var_info.get("frequency")
-                in_files_d[supp_var_info["name"]] = {
-                    "files": collect_files(in_dir, supp_var_info, cfg),
-                    "raw_var": supp_var_info["raw_var"],
-                    "units": supp_var_info.get("units"),
+            try:
+                # organize input files
+                in_files_d = {
+                    var_info["name"]: {
+                        "files": collect_files(file, in_dir, var_info, cfg),
+                        "short_name": var_info["short_name"],
+                        "raw_var": var_info["raw_var"],
+                        "units": var_info.get("units"),
+                    },
                 }
+                if not in_files_d:
+                    logger.info(f'No input files found for file "{file}"')
+                    continue
 
-            glob_attrs["mip"] = var_info["mip"]
+                for supp_var_info in var_info.get("supplimentary_vars", []):
+                    supp_var_info["frequency"] = var_info.get("frequency")
+                    in_files_d[supp_var_info["name"]] = {
+                        "files": collect_files(file, in_dir, supp_var_info, cfg),
+                        "raw_var": supp_var_info["raw_var"],
+                        "units": supp_var_info.get("units"),
+                    }
 
-            extract_variable(
-                in_files_d, out_dir, glob_attrs, var_info, cmor_table
-            )
+                glob_attrs["mip"] = var_info["mip"]
 
-        except Exception as e:
-            logger.error(e)
+                extract_variable(
+                    in_files_d, out_dir, glob_attrs, var_info, cmor_table
+                )
+
+            except Exception as e:
+                logger.error(e)
