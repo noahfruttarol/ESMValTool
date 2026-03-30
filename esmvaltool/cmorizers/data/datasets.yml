@@ -1093,7 +1093,6 @@ datasets:
       The data is currently freely available, but a registration is required.
 
   MODIS-Aqua:
-
     tier: 3
     source: https://ladsweb.modaps.eosdis.nasa.gov/search/order
     last_access: 2026-01-30

@@ -45,3 +45,7 @@ variables:
     raw_name: Cloud_Effective_Radius_Liquid_Mean_Mean
     mip: AERmon
     frequency: mon
+  ae:
+    raw_name: Deep_Blue_Angstrom_Exponent_Land_Mean_Mean
+    mip: custom
+    frequency: mon

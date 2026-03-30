@@ -13,6 +13,7 @@ import logging
 import os
 from pathlib import Path
 
+import iris
 import numpy as np
 import xarray as xr
 from dask import array as da
@@ -23,6 +24,19 @@ from esmvaltool.cmorizers.data import utilities as utils
 logger = logging.getLogger(__name__)
 
 band550 = {"name": "green_558nm", "lambda": 558}
+
+
+def group_by_year(in_dir, files):
+    """Extract year from filename and return it as an integer."""
+    filepaths = list(Path(os.path.join(in_dir)).glob(files))
+    groups = {}
+    for filepath in filepaths:
+        fileparts = str(filepath).split("_")
+        year = int(fileparts[-3])
+        if year not in groups:
+            groups[year] = []
+        groups[year].append(filepath)
+    return groups
 
 
 def _extract_variable(short_name, var, cfg, in_dir, out_dir):
@@ -43,62 +57,71 @@ def _extract_variable(short_name, var, cfg, in_dir, out_dir):
         in_dir,
         ver,
     )
-    for filepath in Path(os.path.join(in_dir)).glob(files):
-        xrds = xr.open_dataset(filepath, group="Aerosol_Parameter_Average")
-        xrvar = xrds.sel(Band=band550["name"], Optical_Depth_Range="all")[
-            raw_var
-        ]
+    cubes = iris.cube.CubeList()
+    groups = group_by_year(in_dir, files)
+    for year, filepaths in groups.items():
+        for filepath in filepaths:
+            xrds = xr.open_dataset(filepath, group="Aerosol_Parameter_Average")
+            xrvar = xrds.sel(Band=band550["name"], Optical_Depth_Range="all")[
+                raw_var
+            ]
 
-        # change order of latitude and longitude coordinates
-        # xrvar = xrvar.transpose()
+            # change order of latitude and longitude coordinates
+            # xrvar = xrvar.transpose()
 
-        # Add additional coordinates before converting to an iris cube, as this is easier with xarray
+            # Add additional coordinates before converting to an iris cube, as this is easier with xarray
 
-        # Time not present in source data, needs to be added manually
-        # Determine time from filename:
-        fileparts = str(filepath).split("_")
-        year = int(fileparts[-3])
-        monthstr = fileparts[-4]
-        month = [
-            "JAN",
-            "FEB",
-            "MAR",
-            "APR",
-            "MAY",
-            "JUN",
-            "JUL",
-            "AUG",
-            "SEP",
-            "OCT",
-            "NOV",
-            "DEC",
-        ].index(monthstr) + 1
-        days_since_1850 = dt.date(year, month, 15) - dt.date(1850, 1, 1)
-        lb_since_1850 = dt.date(year, month, 1) - dt.date(1850, 1, 1)
-        if month == 12:
-            ub_since_1850 = dt.date(year + 1, 1, 1) - dt.date(1850, 1, 1)
-        else:
-            ub_since_1850 = dt.date(year, month + 1, 1) - dt.date(1850, 1, 1)
+            # Time not present in source data, needs to be added manually
+            # Determine time from filename:
+            fileparts = str(filepath).split("_")
+            year = int(fileparts[-3])
+            monthstr = fileparts[-4]
+            month = [
+                "JAN",
+                "FEB",
+                "MAR",
+                "APR",
+                "MAY",
+                "JUN",
+                "JUL",
+                "AUG",
+                "SEP",
+                "OCT",
+                "NOV",
+                "DEC",
+            ].index(monthstr) + 1
+            days_since_1850 = dt.date(year, month, 15) - dt.date(1850, 1, 1)
+            lb_since_1850 = dt.date(year, month, 1) - dt.date(1850, 1, 1)
+            if month == 12:
+                ub_since_1850 = dt.date(year + 1, 1, 1) - dt.date(1850, 1, 1)
+            else:
+                ub_since_1850 = dt.date(year, month + 1, 1) - dt.date(
+                    1850, 1, 1
+                )
 
-        xrvar = xrvar.assign_coords(time=days_since_1850.days)
-        xrvar = xrvar.expand_dims("time", axis=2)
-        xrvar["time"].attrs["units"] = "days since 1850-01-01 00:00:00"
+            xrvar = xrvar.assign_coords(time=days_since_1850.days)
+            xrvar = xrvar.expand_dims("time", axis=2)
+            xrvar["time"].attrs["units"] = "days since 1850-01-01 00:00:00"
 
-        if short_name in ["od550aer", "abs550aer"]:
-            xrvar = xrvar.assign_coords(radiation_wavelength=band550["lambda"])
-            xrvar["radiation_wavelength"].attrs["units"] = "nm"
+            if short_name in ["od550aer", "abs550aer"]:
+                xrvar = xrvar.assign_coords(
+                    radiation_wavelength=band550["lambda"]
+                )
+                xrvar["radiation_wavelength"].attrs["units"] = "nm"
 
-        cube = xrvar.to_iris()
+            cube = xrvar.to_iris()
 
-        # Fix metadata
-        cube.coord("Geodetic Latitude").rename("latitude")
-        cube.coord("Geodetic Longitude").rename("longitude")
+            # Fix metadata
+            cube.coord("Geodetic Latitude").rename("latitude")
+            cube.coord("Geodetic Longitude").rename("longitude")
 
-        # add time bounds
-        cube.coord("time").bounds = np.array(
-            [ub_since_1850.days, lb_since_1850.days]
-        )
+            # add time bounds
+            cube.coord("time").bounds = np.array(
+                [ub_since_1850.days, lb_since_1850.days]
+            )
+            cubes.append(cube)
 
+        cube = cubes.concatenate_cube()
         utils.fix_var_metadata(cube, cmor_info)
         utils.set_global_atts(cube, attrs)
 
@@ -153,8 +176,13 @@ def _extract_variable(short_name, var, cfg, in_dir, out_dir):
         # Save variable
         logger.debug(f"Saving Cube: {cube}, in directory: {out_dir}")
         utils.save_variable(
-            cube, short_name, out_dir, attrs, unlimited_dimensions=["time"]
+            cube,
+            short_name,
+            out_dir,
+            attrs,
+            unlimited_dimensions=["time"],
         )
+        cubes = iris.cube.CubeList()
 
 
 def cmorization(in_dir, out_dir, cfg, cfg_user, start_date, end_date):
