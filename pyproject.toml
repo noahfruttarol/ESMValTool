@@ -50,6 +50,7 @@ dependencies = [
     "fire",
     "fsspec",
     "GDAL",
+    "GSW",
     "ipython",
     "jinja2",
     "joblib",
