@@ -387,6 +387,10 @@ diagnostics:
         additional_datasets:
           - {dataset: ESACCI-OZONE, project: OBS, mip: Amon, tier: 2,
              type: sat, version: L3, start_year: 1997, end_year: 2010}
+          - {dataset: ESACCI-OZONE, project: OBS6, mip: AERmon, tier: 2,
+             type: sat, version: L3-GTO-ECV, start_year: 1995, end_year: 2023}
+          - {dataset: ESACCI-OZONE, project: OBS6, mip: AERmon, tier: 2,
+             type: sat, version: L3-IASI, start_year: 2008, end_year: 2023}
       tozStderr:
         additional_datasets:
           - {dataset: ESACCI-OZONE, project: OBS, mip: Amon, tier: 2,
@@ -399,14 +403,14 @@ diagnostics:
         additional_datasets:
           - {dataset: ESACCI-OZONE, project: OBS, mip: Amon, tier: 2,
              type: sat, version: L3, start_year: 2007, end_year: 2008}
-      toz:
-        additional_datasets:
-          - {dataset: ESACCI-OZONE, project: OBS6, mip: AERmon, tier: 2,
-             type: sat, version: L3, start_year: 1995, end_year: 2023}
       o3:
         additional_datasets:
           - {dataset: ESACCI-OZONE, project: OBS6, mip: AERmon, tier: 2,
-             type: sat, version: L3, start_year: 1984, end_year: 2022}
+             type: sat, version: L3-SAGE-OMPS, start_year: 1984, end_year: 2022}
+          - {dataset: ESACCI-OZONE, project: OBS6, mip: AERmon, tier: 2,
+             type: sat, version: L3-MEGRIDOP, start_year: 2001, end_year: 2022}
+          - {dataset: ESACCI-OZONE, project: OBS6, mip: AERmon, tier: 2,
+             type: sat, version: L3-IASI, start_year: 2008, end_year: 2023}
     scripts: null
 
   ESACCI-SEAICE:
@@ -1175,7 +1179,7 @@ diagnostics:
         mip: Oyr
     additional_datasets:
       - {dataset: WOA, project: OBS6, tier: 2,
-         type: clim, version: 2018, start_year: 2000, end_year: 2000}
+         type: clim, version: 2023, start_year: 2000, end_year: 2000}
       - {dataset: WOA, project: OBS, tier: 2,
          type: clim, version: 2013v2, start_year: 2000, end_year: 2000}
     scripts: null
