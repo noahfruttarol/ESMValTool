@@ -1,64 +1,176 @@
 ---
+
 # Common global attributes for Cmorizer output
 attributes:
 
+  project_id: CMIP6 # cmorization standard
   dataset_id: WOA
-  tier: 2
+  modeling_realm: clim
   type: clim
+  tier: 2
 
   # WOA13
-  # project_id: OBS
   # short_name: woa13
-  # version: '2013v2'
+  # version: 'v2013v2'
   # source: 'https://www.ncei.noaa.gov/data/oceans/woa/WOA13/DATAv2/'
   # reference: 'woa2013v2'
 
+  # WOA18
+  # short_name: woa18
+  # version: 'v2018'
+  # source: 'https://www.ncei.noaa.gov/data/oceans/woa/WOA18/DATA/'
+  # reference: 'woa2018'
+
   # WOA23
-  project_id: OBS6
   short_name: woa23
-  version: '2023'
-  source: 'https://www.ncei.noaa.gov/data/oceans/woa/WOA23/DATA/'
+  version: 'v2023'
+  source: 'https://www.ncei.noaa.gov/data/oceans/woa/woa23/DATA/'
   reference: 'woa2023'
 
   comment: ''
 
 # Variables to cmorize (here use only filename prefix)
-# decav seven decadal means 1955 - 2022 # WOA23 update
+# Temperature and salinity from 1981-2010 climatology (81B0)
+
+# variable labels should include associated versions
+# eg thetao_v2023
+# this permits different setups for different versions
+# (eg if units differ between versions, files, etc)
+
+# mip : CMOR table
+# raw_var: raw variable name
+# name: raw variable long name
+# file: file variant
+# sft_var: surface variable
+# supplimentary_vars: supplementary variable informaiton (list)
+
 variables:
-  thetao:
-    mip: Omon
-    raw_var: t_an
+
+  ######## thetao #####################
+  # one decade for mon
+  thetao_mon: # same for all versions
+    raw_var: t_an # in-situ temperature
     name: temperature
-    file: decav_t
-    srf_var: tos
-  so:
+    short_name: thetao
     mip: Omon
-    raw_var: s_an
+    frequency: mon
+    srf_var: tos # tos = thetao(depth=0)
+    files: [decav71A0,decav81B0,decav91C0]
+    supplimentary_vars:
+    - name: salinity
+      raw_var: s_an
+
+  # annual climatology cmorized to Omon standard
+  thetao_yr_Omon: # same for all versions
+    raw_var: t_an # in-situ temperature
+    name: temperature
+    short_name: thetao
+    mip: Omon
+    frequency: yr
+    srf_var: tos # tos = thetao(depth=0)
+    files: [decav71A0,decav81B0,decav91C0]
+    supplimentary_vars:
+    - name: salinity
+      raw_var: s_an
+
+  # ########### bigthetao ################
+  # one decade for mon, decav81B0
+  bigthetao_mon: # same for all versions
+    raw_var: t_an # in-situ temperature
+    name: temperature
+    short_name: bigthetao
+    mip: Omon
+    frequency: mon
+    files: [decav71A0,decav81B0,decav91C0]
+    supplimentary_vars:
+    - name: salinity
+      raw_var: s_an
+
+  # annual climatology cmorized to Omon standard
+  bigthetao_yr_Omon: # same for all versions
+    raw_var: t_an # in-situ temperature
+    name: temperature
+    short_name: bigthetao
+    mip: Omon
+    frequency: yr
+    files: [decav71A0,decav81B0,decav91C0]
+    supplimentary_vars:
+    - name: salinity
+      raw_var: s_an
+
+  ##### so #########################
+
+  so_mon:
+    versions: ['v2018','v2023']
+    short_name: so
+    mip: Omon
+    frequency: mon
+    raw_var: s_an # practical salinity. dims are (depth, lat, lon)
     name: salinity
-    file: decav_s
-    srf_var: sos
+    srf_var: sos # sos = so(depth=0)
+    units: 1 # force units to be 1 (despite being labelled 1e-3 in 2018)
+    files: [decav71A0,decav81B0,decav91C0]
+    supplimentary_vars:
+    - raw_var: t_an # in-situ temperature
+      name: temperature
+
+  # annual climatology cmorized to Omon standard
+  so_yr_Omon:
+    versions: ['v2018','v2023']
+    short_name: so
+    mip: Omon
+    frequency: yr
+    raw_var: s_an # practical salinity. dims are (depth, lat, lon)
+    name: salinity
+    srf_var: sos # sos = so(depth=0)
+    units: 1 # force units to be 1 (despite being labelled 1e-3 in 2018)
+    files: [decav71A0,decav81B0,decav91C0]
+    supplimentary_vars:
+    - raw_var: t_an # in-situ temperature
+      name: temperature
+
   o2:
+    versions: ['v2018','v2023']
+    short_name: o2
     mip: Oyr
+    frequency: yr
     raw_var: o_an
     name: oxygen
-    file: all_o
+    files: [all_o]
+    units: "micromole / kilogram" # cf_units cannot interpret native "micromole_per_kilogram" unit
+
   no3:
+    versions: ['v2018','v2023']
+    short_name: no3
     mip: Oyr
+    frequency: yr
     raw_var: n_an
     name: nitrate
-    file: all_n
+    files: [all_n]
+    units: "micromole / kilogram" # cf_units cannot interpret native "micromole_per_kilogram" unit
+
   po4:
+    versions: ['v2018','v2023']
+    short_name: po4
     mip: Oyr
+    frequency: yr
     raw_var: p_an
     name: phosphate
-    file: all_p
+    files: [all_p]
+    units: "micromole / kilogram" # cf_units cannot interpret native "micromole_per_kilogram" unit
+
   si:
+    versions: ['v2018','v2023']
+    short_name: si
     mip: Oyr
+    frequency: yr
     raw_var: i_an
     name: silicate
-    file: all_i
+    files: [all_i]
+    units: "micromole / kilogram" # cf_units cannot interpret native "micromole_per_kilogram" unit
 
 # Custom dictionary for this cmorizer
 custom:
-  reference_year: 2000
-  resolution: '1.00' # 0.25 or 1.00 available for temperature and salinity
+  resolution: '1.00'
+  rho_bsq: 1035.0  # Boussinesq reference density, kg.m-3
+  grav: 9.81  # gravitational acceleration, m.s-2
