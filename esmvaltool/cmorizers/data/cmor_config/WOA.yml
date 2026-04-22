@@ -16,16 +16,16 @@ attributes:
   # reference: 'woa2013v2'
 
   # WOA18
-  short_name: woa18
-  version: 'v2018'
-  source: 'https://www.ncei.noaa.gov/data/oceans/woa/WOA18/DATA/'
-  reference: 'woa2018'
+  # short_name: woa18
+  # version: 'v2018'
+  # source: 'https://www.ncei.noaa.gov/data/oceans/woa/WOA18/DATA/'
+  # reference: 'woa2018'
 
   # WOA23
-  # short_name: woa23
-  # version: 'v2023'
-  # source: 'https://www.ncei.noaa.gov/data/oceans/woa/woa23/DATA/'
-  # reference: 'woa2023'
+  short_name: woa23
+  version: 'v2023'
+  source: 'https://www.ncei.noaa.gov/data/oceans/woa/woa23/DATA/'
+  reference: 'woa2023'
 
   comment: ''
 
