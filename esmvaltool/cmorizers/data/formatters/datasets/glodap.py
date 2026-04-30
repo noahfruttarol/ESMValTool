@@ -126,6 +126,14 @@ def extract_variable(in_files, out_dir, attrs, raw_info, cmor_table):
         ),
         0,
     )
+    if var in ["no3", "o2"]:
+        # the actual unit is umol/kg, but we want mol/m^3,
+        # so I am making the naive assumption that the density of seawater is 1.025 kg/l,
+        # which is a common approximation for seawater.
+        # This allows us an easier conversion.
+        units = Unit("1.028umol l-1")
+        cube.units = units
+        cube.convert_units("mol m-3")
 
     fix_var_metadata(cube, var_info)
     cube = fix_coords(cube)

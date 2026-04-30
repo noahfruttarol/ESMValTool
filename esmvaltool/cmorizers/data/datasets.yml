@@ -783,7 +783,20 @@ datasets:
     tier: 2
     source: https://www.glodap.info/index.php/mapped-data-product/
     last_access: 2020-03-03
-    info: "Use automatic download feature to get the data"
+    info: /
+      Use automatic download feature to get the data.
+      caviats
+        The dataset is representative of a large time period but is marked with the timestamp of the year 2005.
+
+        The original units of o2 and no3 variables are umol/kg.
+        To convert to the CMOR units mol/m3, we assume a constant sea water density of 1028 kg/m3,
+        which is approximately the sea water density for T=4°C, salinity=35PSU,
+        and p=0bar according to the UNESCO formula
+        (UNESCO, 1981, Tenth report of the joint panel on oceanographic tables and standards,
+        UNESCO Technical Papers in Marine Science,
+        see https://www.wkcgroup.com/tools-room/seawater-density-calculator/
+        and https://link.springer.com/content/pdf/bbm:978-3-319-18908-6/1.pdf).
+
 
   GLWD:
     tier: 2
