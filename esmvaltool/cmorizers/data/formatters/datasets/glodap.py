@@ -131,6 +131,7 @@ def extract_variable(in_files, out_dir, attrs, raw_info, cmor_table):
         # so I am making the naive assumption that the density of seawater is 1.025 kg/l,
         # which is a common approximation for seawater.
         # This allows us an easier conversion.
+        logger.info("Converting units from umol/kg to mol/m^3 using a seawater density of 1.025 kg/l for variable %s", var)
         units = Unit("1.028umol l-1")
         cube.units = units
         cube.convert_units("mol m-3")

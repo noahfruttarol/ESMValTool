@@ -16,6 +16,7 @@ Modification history
    20190227-lovato_tomas: written.
 """
 
+import datetime
 import logging
 import os
 from warnings import catch_warnings, filterwarnings
@@ -42,8 +43,6 @@ def _fix_data(cube, var):
             # Assume standard year 365_day
             cube *= -12.01 / 1000.0 / (86400.0 * 365.0)
             metadata.attributes["positive"] = "down"
-        elif var == "dpco2":
-            cube *= -1.0 * 101325.0 / 1.0e06
         elif var == "spco2":
             cube *= 101325.0 / 1.0e06
     return cube
@@ -76,6 +75,8 @@ def extract_variable(var_info, raw_info, out_dir, attrs):
     for cube in cubes:
         if cube.var_name == rawvar:
             fix_var_metadata(cube, var_info)
+            cube.coord('time').rename('')
+            
             cube = fix_coords(cube)
             _fix_data(cube, var)
             set_global_atts(cube, attrs)

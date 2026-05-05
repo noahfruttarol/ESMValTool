@@ -2,11 +2,11 @@
 # Common global attributes for Cmorizer output
 attributes:
   dataset_id: Landschuetzer2016
-  version: 'v2016'
+  version: 'v2023'
   tier: 2
   type: clim
-  project_id: OBS
-  source: 'https://www.nodc.noaa.gov/archive/arc0105/0160558/3.3/data/0-data/'
+  project_id: OBS6
+  source: 'https://www.ncei.noaa.gov/data/oceans/archive/arc0105/0160558/9.9/data/0-data/'
   reference: 'landschuetzer2016'
   comment: ''
 
@@ -15,14 +15,10 @@ variables:
   fgco2:
     mip: Omon
     # Match CMOR variables with input file one
-    raw: fgco2_smoothed
+    raw: fgco2_clim
     # input file name
-    file: spco2_1982-2015_MPI_SOM-FFN_v2016.nc
+    file: SOM-FFN_v2023_CLIM_NCEI_OCADS.nc
   spco2:
     mip: Omon
-    raw: spco2_smoothed
-    file: spco2_1982-2015_MPI_SOM-FFN_v2016.nc
-  dpco2:
-    mip: Omon
-    raw: dco2_smoothed
-    file: spco2_1982-2015_MPI_SOM-FFN_v2016.nc
+    raw: spco2_clim
+    file: SOM-FFN_v2023_CLIM_NCEI_OCADS.nc
