@@ -1,0 +1,19 @@
+# Global attributes of NetCDF file
+attributes:
+  dataset_id: CALIOP
+  project_id: CMOR6
+  tier: 2
+  version: "1"
+  modeling_realm: sat
+  source: ''
+  reference: 'caliop'
+  comment: ''
+  files: ''
+# Variables to CMORize
+variables:
+  od550aer:
+    raw_name: Aerosol_Optical_Depth
+    mip: AERmon
+  # abs550aer:
+  #   raw_name: Absorbing_Optical_Depth
+  #   mip: AERmon
