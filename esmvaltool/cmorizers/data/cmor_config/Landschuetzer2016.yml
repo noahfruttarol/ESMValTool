@@ -2,7 +2,7 @@
 # Common global attributes for Cmorizer output
 attributes:
   dataset_id: Landschuetzer2016
-  version: 'v2023'
+  version: '9.9_v2023'
   tier: 2
   type: clim
   project_id: OBS6

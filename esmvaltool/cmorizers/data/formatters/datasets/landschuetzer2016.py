@@ -25,6 +25,7 @@ import iris
 from dask import array as da
 
 from esmvaltool.cmorizers.data.utilities import (
+    add_scalar_depth_coord,
     constant_metadata,
     fix_coords,
     fix_var_metadata,
@@ -58,6 +59,10 @@ def _fix_fillvalue(cube, field, filename):
             field.cf_data.missing_value,
         )
 
+def _fix_scalar_coords(cube, cmor_var):
+    """Fix scalar coordinates."""
+    if cmor_var in ["fgco2", "spco2"]:
+        add_scalar_depth_coord(cube)
 
 def extract_variable(var_info, raw_info, out_dir, attrs):
     """Extract to all vars."""
@@ -74,10 +79,43 @@ def extract_variable(var_info, raw_info, out_dir, attrs):
 
     for cube in cubes:
         if cube.var_name == rawvar:
+            _fix_scalar_coords(cube, var)
             fix_var_metadata(cube, var_info)
-            cube.coord('time').rename('')
-            
-            cube = fix_coords(cube)
+            index_year = 2023
+            timeepoch = datetime.datetime(1950, 1, 1)
+            time_points = [0] * 12
+            for month in range(1, 13):
+                month_stamp = datetime.datetime(index_year, month, 15)
+                month_stamp = month_stamp - timeepoch
+
+                time_points[month - 1] = month_stamp.days
+            cube.coord("time").points = time_points
+            cube.coord('time').units = 'days since 1950-01-01 00:00:00'
+
+            # ensure auxiliary depth coord uses CMOR var name 'depth'
+            fix_coords(cube)
+
+            # ensure auxiliary depth coord uses CMOR var name 'depth'
+            for coord in cube.coords():
+                if coord.var_name == 'lev' and (
+                    coord.name().lower().startswith('depth')
+                    or getattr(coord, 'standard_name', '') == 'depth'
+                ):
+                    coord.var_name = 'depth'
+                    coord.standard_name = 'depth'
+                    coord.long_name = 'depth'
+                    break
+
+            _fix_data(cube, var)
+            set_global_atts(cube, attrs)
+            save_variable(
+                cube,
+                var,
+                out_dir,
+                attrs,
+                local_keys=["positive"],
+                unlimited_dimensions=["time"],
+            )
             _fix_data(cube, var)
             set_global_atts(cube, attrs)
             save_variable(
