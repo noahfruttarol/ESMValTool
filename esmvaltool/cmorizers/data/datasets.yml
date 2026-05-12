@@ -82,6 +82,14 @@ datasets:
       Download the following file:
       http://berkeleyearth.lbl.gov/auto/Global/Gridded/Land_and_Ocean_LatLong1.nc
 
+  CALIOP:
+    tier: 3
+    source: https://asdc.larc.nasa.gov/project/CALIPSO/CAL_LID_L3_Tropospheric_APro_AllSky-Standard-V4-20_V4-20
+    last_access: 2026-05-08
+    info: /
+      data \_o_/
+
+
   CALIPSO-GOCCP:
     tier: 2
     source: ftp://ftp.climserv.ipsl.polytechnique.fr/
