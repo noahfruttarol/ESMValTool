@@ -1,19 +1,17 @@
+---
 # Global attributes of NetCDF file
 attributes:
   dataset_id: CALIOP
-  project_id: CMOR6
-  tier: 2
-  version: "1"
-  modeling_realm: sat
-  source: ''
+  project_id: OBS6
+  tier: 3
+  version: 'AllSky-Standard-V4-20N'
+  type: 'sat'
+  source: 'https://asdc.larc.nasa.gov/project/CALIPSO/CAL_LID_L3_Tropospheric_APro_AllSky-Standard-V4-20_V4-20'
   reference: 'caliop'
   comment: ''
-  files: ''
+  files: 'CAL_LID_L3_Tropospheric_APro_AllSky-Standard-V4-20.*N.hdf'
 # Variables to CMORize
 variables:
   od550aer:
-    raw_name: Aerosol_Optical_Depth
+    raw_name: AOD_Mean
     mip: AERmon
-  # abs550aer:
-  #   raw_name: Absorbing_Optical_Depth
-  #   mip: AERmon
