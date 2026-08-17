@@ -15,6 +15,8 @@ attributes:
     'Notice to users: this data has recommended guidelines for use and publication,
     please refer to https://aeronet.gsfc.nasa.gov/new_web/data_usage.html.'
 
+  interpolation_method: log # Interpolation method for AOD data. Options: 'linear', 'log'
+
 # Variables to cmorize
 variables:
   od440aer:
@@ -22,7 +24,10 @@ variables:
     wavelength: 440
   od550aer:
     mip: AERmon
-    wavelength: 551
+    wavelength: 550
   od870aer:
     mip: AERmon
     wavelength: 870
+  ae:
+    mip: Custom
+    raw_name: 440-870_Angstrom_Exponent

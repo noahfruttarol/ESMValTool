@@ -132,7 +132,7 @@ def aod_analyse(model_data, aeronet_obs_cube, clim_seas, wavel):
     clim_seas : List.
        Strings to denote climate seasons ["DJF", "MAM", "JJA", "SON"]
     wavel : String.
-        AOD wavelength, default = 440nm - translates to pseudo-level.
+        AOD wavelength, default = 550nm - translates to pseudo-level.
 
     Returns
     -------
@@ -140,7 +140,7 @@ def aod_analyse(model_data, aeronet_obs_cube, clim_seas, wavel):
         Contains figure instances for the seasonal contour plots overlaid with
         observations of AOD from AeroNET.
     fig_scatter : Figure object.
-        The scatter plot comparing modelled and observed AOD at 440nm.
+        The scatter plot comparing modelled and observed AOD at 550nm.
     """
     # Convert wave length nm -> um
     wv_mi = str(float(wavel) / 1000.0)
@@ -157,7 +157,9 @@ def aod_analyse(model_data, aeronet_obs_cube, clim_seas, wavel):
     # Co-locate model grid points with measurement sites --func from aero_utils
     anet_aod_lats = aeronet_obs_cube.coord("latitude").points.tolist()
     anet_aod_lons = aeronet_obs_cube.coord("longitude").points.tolist()
-    aod_at_anet = extract_pt(model_data, anet_aod_lats, anet_aod_lons)
+    aod_at_anet = extract_pt(
+        model_data, anet_aod_lats, anet_aod_lons, nearest=True
+    )
 
     # Set up seasonal contour plots
     figures = []
@@ -429,7 +431,7 @@ def main(config):
     Parameters
     ----------
     wavel : String.
-        User defined. Default is "440".
+        User defined. Default is "550".
     config : dict
         The ESMValTool configuration.
     """
@@ -437,7 +439,7 @@ def main(config):
     datasets = group_metadata(input_data.values(), "dataset")
 
     # Default wavelength
-    wavel = config.get("wavel", "440")
+    wavel = config.get("wavel", "550")
     thresholds = {
         "min_days_per_mon": int(config.get("min_days_per_mon", 1)),
         "min_mon_per_seas": int(config.get("min_mon_per_seas", 3)),

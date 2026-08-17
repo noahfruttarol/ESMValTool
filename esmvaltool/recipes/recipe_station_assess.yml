@@ -1,5 +1,5 @@
 # ESMValTool
-# recipe_aod_aeronet_assess.yml
+
 ---
 documentation:
   description: |
@@ -20,42 +20,32 @@ documentation:
   projects:
     - esmval
 
-preprocessors:
-  climate_statistics:
-    climate_statistics:
-      operator: mean
-      period: season
-      seasons: ['DJF', 'MAM', 'JJA', 'SON']
-  multi_model_statistics:
-    span: overlap
-    statistics: [mean]
+preprocessor:
+
 
 diagnostics:
   od550aer_climatologies:
     description: Visualise spatial multi-annual seasonal means AOD at 550nm.
     variables:
 
-      od550aer: &var_od550aer
+      od550aer:
         mip: AERmon
         short_name: od550aer
         start_year: 1994
         end_year: 2014
         additional_datasets:
-          - {dataset: AERONET, project: OBS6, mip: AERmon, tier: 3, type: ground, version: 20250726}
-
-      od550aer_season:
-        <<: *var_od550aer
-        preprocessor: climate_statistics
-        additional_datasets:
+          - {dataset: AERONET, project: OBS6, mip: AERmon, tier: 3, type: ground, version: 20250726, frequency: mon}
           - {dataset: CanESM5, project: CMIP6, activity: CMIP, institute: CCCma, mip: AERmon, exp: historical, ensemble: r1i1p1f1, grid: gn, version: v20190429}
 
     scripts:
       aeronet:
-        script: aerosols/aod_aeronet_assess.py
-        observational_dataset: AERONET
-        quickplot:
-          plot_type: plot
-        min_days_per_mon: 1
-        min_mon_per_seas: 1
-        min_seas_per_year: 1
-        min_seas_per_clim: 1
+        script: /home/rnf000/site8/cmorization/cmor_aeronet/station_diag.py
+        script_params:
+          station_dataset: AERONET
+          quickplot:
+            plot_type: plot
+          thresholds:
+            min_days_per_mon: 1
+            min_mon_per_seas: 1
+            min_seas_per_year: 1
+          seasons: season

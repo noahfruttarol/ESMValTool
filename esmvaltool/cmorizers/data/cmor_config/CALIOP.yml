@@ -4,14 +4,36 @@ attributes:
   dataset_id: CALIOP
   project_id: OBS6
   tier: 3
-  version: 'AllSky-Standard-V4-20N'
   type: 'sat'
-  source: 'https://asdc.larc.nasa.gov/project/CALIPSO/CAL_LID_L3_Tropospheric_APro_AllSky-Standard-V4-20_V4-20'
   reference: 'caliop'
   comment: ''
-  files: 'CAL_LID_L3_Tropospheric_APro_AllSky-Standard-V4-20.*N.hdf'
+
+  # allsky night
+  # version: 'AllSky-Standard-V4-20N'
+  # source: 'https://asdc.larc.nasa.gov/project/CALIPSO/CAL_LID_L3_Tropospheric_APro_AllSky-Standard-V4-20_V4-20'
+  # files: 'CAL_LID_L3_Tropospheric_APro_AllSky-Standard-V4-20.*N.hdf'
+
+  # cloudfree night
+  # version: 'CloudFree-Standard-V4-20N'
+  # source: 'https://asdc.larc.nasa.gov/project/CALIPSO/CAL_LID_L3_Tropospheric_APro_CloudFree-Standard-V4-20_V4-20'
+  # files: 'CAL_LID_L3_Tropospheric_APro_CloudFree-Standard-V4-20.*N.hdf'
+
+  # cloudfree day
+  version: 'CloudFree-Standard-V4-20D'
+  source: 'https://asdc.larc.nasa.gov/project/CALIPSO/CAL_LID_L3_Tropospheric_APro_CloudFree-Standard-V4-20_V4-20'
+  files: 'CAL_LID_L3_Tropospheric_APro_CloudFree-Standard-V4-20.*D.hdf'
+
 # Variables to CMORize
 variables:
   od550aer:
     raw_name: AOD_Mean
     mip: AERmon
+  od550cleandust:
+    raw_name: AOD_Mean_Dust
+    mip: Custom
+  od550polldust:
+    raw_name: AOD_Mean_Polluted_Dust
+    mip: Custom
+  od550smoke:
+    raw_name: AOD_Mean_Elevated_Smoke
+    mip: Custom

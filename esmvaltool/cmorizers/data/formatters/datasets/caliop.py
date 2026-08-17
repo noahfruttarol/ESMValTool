@@ -146,7 +146,12 @@ def read_hdf(
         ],
     )
 
-    if short_name in ["od550aer"]:
+    if short_name in [
+        "od550aer",
+        "od550cleandust",
+        "od550polldust",
+        "od550smoke",
+    ]:
         # add auxiliary coordinate for wavelength (550 nm for this variable, which is AOD at 550 nm)
         wavelength_coord = iris.coords.AuxCoord(
             [532],

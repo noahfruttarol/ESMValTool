@@ -26,7 +26,6 @@ import requests
 from cf_units import Unit
 
 from esmvaltool.cmorizers.data.utilities import (
-    constant_metadata,
     fix_coords,
     fix_var_metadata,
     save_variable,
@@ -39,12 +38,23 @@ logger = logging.getLogger(__name__)
 def _fix_data(cube, var):
     """Specific data fixes for different variables."""
     logger.info("Fixing data ...")
-    with constant_metadata(cube):
-        if var in [
-            "dissic",
-            "talk",
-        ]:
-            cube /= 1000.0  # Convert from umol/kg to mol/m^3
+    if var in [
+        "dissic",
+        "talk",
+        "no3",
+        "o2",
+    ]:
+        # the actual unit is umol/kg, but we want mol/m^3,
+        # so I am making the naive assumption that the density of seawater is 1.028 kg/l,
+        # which is a common approximation for seawater.
+        # This allows us an easier conversion.
+        logger.info(
+            "Converting units from umol/kg to mol/m^3 using a seawater density of 1.028 kg/l for variable %s",
+            var,
+        )
+        units = Unit("1.028umol l-1")
+        cube.units = units
+        cube.convert_units("mol m-3")
     return cube
 
 
@@ -126,19 +136,9 @@ def extract_variable(in_files, out_dir, attrs, raw_info, cmor_table):
         ),
         0,
     )
-    if var in ["no3", "o2"]:
-        # the actual unit is umol/kg, but we want mol/m^3,
-        # so I am making the naive assumption that the density of seawater is 1.025 kg/l,
-        # which is a common approximation for seawater.
-        # This allows us an easier conversion.
-        logger.info("Converting units from umol/kg to mol/m^3 using a seawater density of 1.025 kg/l for variable %s", var)
-        units = Unit("1.028umol l-1")
-        cube.units = units
-        cube.convert_units("mol m-3")
-
+    _fix_data(cube, var)
     fix_var_metadata(cube, var_info)
     cube = fix_coords(cube)
-    _fix_data(cube, var)
     set_global_atts(cube, attrs)
     save_variable(cube, var, out_dir, attrs, unlimited_dimensions=["time"])
 
