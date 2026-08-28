@@ -29,6 +29,7 @@ import numpy as np
 import pandas as pd
 from fsspec.implementations.tar import TarFileSystem
 from pys2index import S2PointIndex
+from scipy.interpolate import interp1d
 
 from esmvaltool.cmorizers.data import utilities as utils
 
@@ -81,6 +82,87 @@ class AeronetStations(NamedTuple):
     elevation: list[float]
     contacts: list[str]
     data_frame: list[pd.DataFrame]
+
+
+def smart_interp(xs, ys, zs, method="log"):
+    xs = np.asarray(xs, dtype=float)
+    ys = np.asarray(ys, dtype=float)
+    zs = np.asarray(zs, dtype=float)
+
+    valid = np.isfinite(xs) & np.isfinite(ys)
+
+    if method == "log":
+        valid &= (xs > 0) & (ys > 0)
+        if valid.sum() < 2:
+            return np.full(zs.shape, np.nan, dtype=float)
+
+        interpolator = interp1d(
+            np.log10(xs[valid]),
+            np.log10(ys[valid]),
+            bounds_error=False,
+            fill_value="extrapolate",
+        )
+        return 10 ** interpolator(np.log10(zs))
+
+    if method == "linear":
+        if valid.sum() < 2:
+            return np.full(zs.shape, np.nan, dtype=float)
+
+        interpolator = interp1d(
+            xs[valid],
+            ys[valid],
+            bounds_error=False,
+            fill_value="extrapolate",
+        )
+        return interpolator(zs)
+
+    raise ValueError(f"Unsupported interpolation method: {method}")
+
+
+def get_interpolated_cube(cube, target_wavelengths, method="log"):
+    """Interpolate AOD data to target wavelengths."""
+    source_wavelengths = np.asarray(
+        cube.coord("radiation_wavelength").points,
+        dtype=float,
+    )
+    target_wavelengths = np.asarray(target_wavelengths, dtype=float)
+    data = np.ma.asarray(cube.data)
+
+    interpolated = np.full(
+        (data.shape[0], len(target_wavelengths), data.shape[2]),
+        np.nan,
+    )
+
+    for time_index in range(data.shape[0]):
+        for station_index in range(data.shape[2]):
+            profile = np.ma.filled(
+                data[time_index, :, station_index],
+                np.nan,
+            )
+            interpolated[time_index, :, station_index] = smart_interp(
+                source_wavelengths,
+                profile,
+                target_wavelengths,
+                method,
+            )
+
+    interpolated_cube = cube[:, : len(target_wavelengths), :]
+    interpolated_cube.data = np.ma.masked_array(
+        interpolated,
+        np.isnan(interpolated),
+        fill_value=1.0e20,
+    )
+
+    for ancillary_variable in interpolated_cube.ancillary_variables():
+        ancillary_data = ancillary_variable.core_data()
+        if hasattr(ancillary_data, "compute"):
+            ancillary_data = ancillary_data.compute()
+        ancillary_variable.data = np.ma.asarray(ancillary_data)
+
+    interpolated_cube.coord(
+        "radiation_wavelength",
+    ).points = target_wavelengths
+    return interpolated_cube
 
 
 def parse_contact(contact):
@@ -267,6 +349,13 @@ def assemble_cube(stations, idx, wavelengths=None):
         ],
         axis=-1,
     )[..., idx]
+    angstrom_exponent = da.stack(
+        [
+            df["440-870_Angstrom_Exponent"].values.astype(np.float32)
+            for df in data_frames
+        ],
+        axis=-1,
+    )[..., idx]
 
     wavelength_points = da.array(wavelengths, dtype=np.float64)
     wavelength_coord = iris.coords.DimCoord(
@@ -381,7 +470,7 @@ def assemble_cube(stations, idx, wavelengths=None):
             (num_points_ancillary, (0, 1, 2)),
         ],
     )
-    return cube
+    return cube, angstrom_exponent
 
 
 def build_cube(filesystem, paths, wavelengths=None):
@@ -394,8 +483,8 @@ def build_cube(filesystem, paths, wavelengths=None):
     index = S2PointIndex(latlon_points)
     cell_ids = index.get_cell_ids()
     idx = np.argsort(cell_ids)
-    cube = assemble_cube(stations, idx, wavelengths)
-    return cube
+    cube, angstrom_exponent = assemble_cube(stations, idx, wavelengths)
+    return cube, angstrom_exponent
 
 
 def cmorization(in_dir, out_dir, cfg, cfg_user, start_date, end_date):
@@ -416,9 +505,32 @@ def cmorization(in_dir, out_dir, cfg, cfg_user, start_date, end_date):
         )
     version = versions[0]
     wavelengths = sorted(
-        [var["wavelength"] for var in cfg["variables"].values()],
+        var["wavelength"]
+        for var in cfg["variables"].values()
+        if "wavelength" in var
     )
-    cube = build_cube(tar_file_system, paths, wavelengths)
+
+    # Load all native AERONET wavelengths.
+    cube, angstrom_exponent = build_cube(tar_file_system, paths)
+
+    # Interpolate to 440, 550, and 870 nm.
+    cube = get_interpolated_cube(
+        cube, wavelengths, method=cfg.get("interpolation_method", "log")
+    )
+
+    ae_data = angstrom_exponent.compute()
+    ae_cube = cube[:, 0, :].copy(
+        data=np.ma.masked_array(
+            ae_data,
+            np.isnan(ae_data),
+            fill_value=1.0e20,
+        ),
+    )
+    ae_cube.remove_coord("radiation_wavelength")
+    ae_cube.standard_name = None
+    ae_cube.long_name = "Angstrom Exponent"
+    ae_cube.var_name = "ae"
+    ae_cube.units = "1"
 
     attrs = cfg["attributes"].copy()
     attrs["version"] = version
@@ -428,8 +540,13 @@ def cmorization(in_dir, out_dir, cfg, cfg_user, start_date, end_date):
     for short_name, var in cfg["variables"].items():
         logger.info("CMORizing variable '%s'", short_name)
 
-        idx = wavelengths.index(var["wavelength"])
-        sub_cube = cube[:, idx]
+        if "wavelength" in var:
+            idx = wavelengths.index(var["wavelength"])
+            sub_cube = cube[:, idx]
+        elif short_name == "ae":
+            sub_cube = ae_cube
+        else:
+            continue
 
         attrs["mip"] = var["mip"]
         # attrs['reference'] = var['reference']
